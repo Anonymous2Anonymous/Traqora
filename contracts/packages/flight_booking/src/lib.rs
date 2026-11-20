@@ -31,7 +31,6 @@ enum DataKey {
     Booking(u64),
 }
 
-#[contract]
 pub fn validate_passenger_name_non_lossy(name: &str) {
     for c in name.chars() {
         let code = c as u32;
