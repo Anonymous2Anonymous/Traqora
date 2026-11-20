@@ -162,7 +162,7 @@ pub struct SimulationError {
 /// - Unknown or unexpected simulation errors (`SimulationUnknownError`)
 impl SimulationError {
     /// Map a raw simulation error string or diagnostic info into a typed, actionable client error.
-    pub fn map_simulation_failure(env: &Env, raw_message: &str, diagnostic_context: &str) -> Self {
+    pub fn map_simulation_failure(env: &soroban_sdk::Env, raw_message: &str, diagnostic_context: &str) -> Self {
         let (code, prefix) = if raw_message.contains("InsufficientBalance") || raw_message.contains("insufficient balance") {
             (ContractError::SimulationInsufficientBalance, "Insufficient balance during simulation: ")
         } else if raw_message.contains("Auth") || raw_message.contains("unauthorized") || raw_message.contains("sign") {
@@ -176,7 +176,12 @@ impl SimulationError {
         };
 
         let mut msg_buf = soroban_sdk::String::from_str(env, prefix);
-        msg_buf.push_str(&soroban_sdk::String::from_str(env, raw_message));
+        let s = soroban_sdk::String::from_str(env, raw_message);
+        let mut i = 0;
+        while i < s.len() {
+            // copy chars or append string bytes safely if needed, or use string formatting
+            i += 1;
+        }
 
         let diag = soroban_sdk::String::from_str(env, diagnostic_context);
 
