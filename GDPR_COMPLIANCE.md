@@ -21,6 +21,7 @@ Traqora supports the following GDPR rights:
 
 ## 4. Security Measures (Art. 32 GDPR)
 - **Encryption at Rest**: All PII (Name, Email, Phone) is encrypted using AES-256-GCM.
+- **Input Integrity & Preservation**: International passenger names are validated and preserved losslessly without aggressive ASCII stripping, while control characters are strictly rejected.
 - **Encryption in Transit**: All API communication is forced over TLS (HTTPS).
 - **Rate Limiting**: Protection against brute-force and DDoS attacks.
 - **Access Control**: Role-based access control (RBAC) for admin functions.

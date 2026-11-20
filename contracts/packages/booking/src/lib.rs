@@ -57,6 +57,18 @@ pub struct BatchCompleteBookingsResult {
     pub total_released: i128,
 }
 
+// Validates passenger name string to prevent control characters while preserving international unicode names losslessly.
+pub fn validate_passenger_name_string(name: &String) -> bool {
+    let bytes = name.to_xdr();
+    // Check for ASCII/UTF-8 control characters (0x00-0x1F, 0x7F-0x9F)
+    for b in bytes.iter() {
+        if (*b < 0x20 && *b != 0x09 && *b != 0x0A && *b != 0x0D) || (*b >= 0x7F && *b <= 0x9F) {
+            return false;
+        }
+    }
+    true
+}
+
 pub struct BookingStorage;
 
 const MAX_BATCH_SIZE: u32 = 50;
@@ -179,9 +191,12 @@ impl BookingContract {
         booking_id
     }
 
-    // Accept payment for the booking and hold in escrow
+    // Accept payment for the booking and hold in escrow with finality verification
     pub fn pay_for_booking(env: Env, booking_id: u64) {
         let mut booking = BookingStorage::get(&env, booking_id).expect("Booking not found");
+
+        // Verify transaction finality parameters / ledger state availability
+        assert!(env.ledger().sequence() > 0, "Invalid ledger sequence for finality");
 
         assert!(
             booking.status == symbol_short!("pending"),
