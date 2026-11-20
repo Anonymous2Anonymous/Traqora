@@ -338,3 +338,15 @@ fn test_flight_booking_reconcile_reference_timeout_recovery() {
     let id2 = client.reconcile_booking_reference(&passenger, &flight_id, &seat, &1_500, &request_ref);
     assert_eq!(id1, id2);
 }
+
+#[test]
+fn test_flight_booking_passenger_name_non_lossy_validation() {
+    flight_booking::validate_passenger_name_non_lossy("María-Luisa Świtek");
+    flight_booking::validate_passenger_name_non_lossy("René Descartes");
+}
+
+#[test]
+#[should_panic(expected = "Passenger name contains forbidden control characters")]
+fn test_flight_booking_passenger_name_rejects_control_chars() {
+    flight_booking::validate_passenger_name_non_lossy("Bad\u{0007}Name");
+}

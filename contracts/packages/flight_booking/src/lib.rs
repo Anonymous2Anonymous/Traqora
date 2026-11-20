@@ -32,6 +32,17 @@ enum DataKey {
 }
 
 #[contract]
+pub fn validate_passenger_name_non_lossy(name: &str) {
+    for c in name.chars() {
+        let code = c as u32;
+        assert!(
+            !(code <= 0x1F || (0x7F..=0x9F).contains(&code)),
+            "Passenger name contains forbidden control characters"
+        );
+    }
+}
+
+#[contract]
 pub struct FlightBookingContract;
 
 #[contractimpl]

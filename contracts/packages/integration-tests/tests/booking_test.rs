@@ -87,3 +87,17 @@ fn test_refund_flow() {
     assert_eq!(booking.status, Symbol::new(&env, "refunded"));
     assert_eq!(booking.amount_escrowed, 0);
 }
+
+#[test]
+fn test_validate_passenger_name_non_lossy_valid_international() {
+    // Valid international names should pass without corruption
+    booking::validate_passenger_name_non_lossy("François Müller-Özdemir 🚀");
+    booking::validate_passenger_name_non_lossy("José María García");
+    booking::validate_passenger_name_non_lossy("李小龙");
+}
+
+#[test]
+#[should_panic(expected = "Passenger name contains forbidden control characters")]
+fn test_validate_passenger_name_rejects_control_characters() {
+    booking::validate_passenger_name_non_lossy("John\u{001F}Doe");
+}
