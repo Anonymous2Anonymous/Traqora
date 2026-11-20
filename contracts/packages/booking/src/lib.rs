@@ -179,9 +179,14 @@ impl BookingContract {
         booking_id
     }
 
-    // Accept payment for the booking and hold in escrow
+    /// Accept payment for the booking and hold in escrow.
+    /// Verifies transaction finality by ensuring the contract's token balance increases by at least the booking price.
+    /// Returns an error if the balance delta is insufficient or if the booking is not in pending status.
     pub fn pay_for_booking(env: Env, booking_id: u64) {
         let mut booking = BookingStorage::get(&env, booking_id).expect("Booking not found");
+
+        let token_client = token::Client::new(&env, &booking.token);
+        let balance_before = token_client.balance(&env.current_contract_address());
 
         assert!(
             booking.status == symbol_short!("pending"),
@@ -190,13 +195,17 @@ impl BookingContract {
 
         booking.passenger.require_auth();
 
-        let token_client = token::Client::new(&env, &booking.token);
-
         // Transfer tokens from passenger to this contract
         token_client.transfer(
             &booking.passenger,
             &env.current_contract_address(),
             &booking.price,
+        );
+
+        let balance_after = token_client.balance(&env.current_contract_address());
+        assert!(
+            balance_after >= balance_before + booking.price,
+            "Payment transaction finality verification failed"
         );
 
         booking.amount_escrowed = booking.price;
