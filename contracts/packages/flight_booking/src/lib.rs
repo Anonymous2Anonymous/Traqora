@@ -99,4 +99,25 @@ impl FlightBookingContract {
     pub fn init_upgrade_owner(env: Env, owner: Address) {
         access::UpgradeTimelock::init_upgrade_owner(&env, &owner);
     }
+
+    pub fn validate_passenger_name(env: Env, name: soroban_sdk::String) -> bool {
+        let len = name.len();
+        if len == 0 || len > 256 {
+            return false;
+        }
+        let mut buf = [0u8; 256];
+        if len > 256 {
+            return false;
+        }
+        name.copy_into_slice(&mut buf[..len as usize]);
+        for &b in &buf[..len as usize] {
+            if b < 32 && b != 9 && b != 10 && b != 13 {
+                return false;
+            }
+            if b == 127 {
+                return false;
+            }
+        }
+        true
+    }
 }

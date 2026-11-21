@@ -138,6 +138,7 @@ For deployment procedures see [docs/deployment-guide.md](./docs/deployment-guide
 
 - [V1 booking detail contract](./packages/client/docs/V1_BOOKING_DETAIL_CONTRACT.md): missing, unauthorized, pending and unavailable detail states, plus supplier schedule change display.
 - [V1 cancellation eligibility rules](./packages/backend/docs/CANCELLATION_ELIGIBILITY.md): decision matrix combining platform status with supplier fare rules.
+- [V1 passenger name validation](./packages/backend/docs/PASSENGER_NAME_VALIDATION.md): supports valid international passenger names without lossy normalization while rejecting control characters.
 
 ## Glossary
 
