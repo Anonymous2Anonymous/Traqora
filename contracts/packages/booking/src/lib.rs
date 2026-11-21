@@ -1,12 +1,5 @@
-#![no_std]
-// Booking-style contract entrypoints legitimately need many arguments;
-// soroban macro-generated clients re-declare these signatures.
-#![allow(clippy::too_many_arguments)]
 use contract_events::{Action, Domain};
-use soroban_sdk::{
-    contract, contractclient, contractimpl, contracttype, symbol_short, token, Address, Env,
-    String, Symbol, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Symbol, Vec};
 
 #[contractclient(name = "BookingReceiptClient")]
 #[allow(clippy::too_many_arguments)]
@@ -601,5 +594,22 @@ impl BookingContract {
                 refunded_amount,
             ),
         );
+    }
+}
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContactDetails {
+    pub channel_type: Symbol,
+    pub identifier: String,
+}
+
+// Minimal contact validation helper within v1 booking scope
+pub fn validate_contact_details(env: &Env, contact: &ContactDetails) -> bool {
+    let email_sym = Symbol::new(env, "email");
+    let sms_sym = Symbol::new(env, "sms");
+    if contact.channel_type == email_sym || contact.channel_type == sms_sym {
+        !contact.identifier.to_string().is_empty()
+    } else {
+        false
     }
 }
