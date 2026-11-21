@@ -22,6 +22,7 @@ pub struct Booking {
     pub escrowed_amount: i128,
     pub state: BookingState,
     pub created_at: u64,
+    pub contact_channel: soroban_sdk::String,
 }
 
 #[contracttype]
@@ -42,9 +43,11 @@ impl FlightBookingContract {
         flight_id: Symbol,
         seat: Symbol,
         amount: i128,
+        contact_channel: soroban_sdk::String,
     ) -> u64 {
         passenger.require_auth();
         assert!(amount > 0, "Invalid amount");
+        assert!(contact_channel.len() > 0, "Invalid contact channel");
 
         let seat_key = (symbol_short!("seat"), flight_id.clone(), seat.clone());
         if env.storage().persistent().has(&seat_key) {
@@ -63,6 +66,7 @@ impl FlightBookingContract {
             escrowed_amount: amount,
             state: BookingState::Confirmed,
             created_at,
+            contact_channel,
         };
 
         env.storage()

@@ -8,6 +8,38 @@ use integration_tests::{
 
 /// Full workflow: booking creation → payment → refund policy → cancellation → refund processing
 #[test]
+fn test_booking_contact_details_flow() {
+    let env = new_env();
+    let actors = generate_actors(&env);
+    let contracts = register_contracts(&env);
+    initialize_token(&env, &contracts.token, &actors.admin);
+    register_and_verify_airline(&env, &contracts.airline, &actors.admin, &actors.airline);
+
+    let price = 500_0000000i128;
+    contracts
+        .token
+        .mint(&actors.admin, &actors.passenger, &price);
+
+    let contact = Symbol::new(&env, "passenger@example.com");
+    let booking_id = contracts.booking.create_booking_with_contact(
+        &actors.passenger,
+        &actors.airline,
+        &Symbol::new(&env, "TQ999"),
+        &Symbol::new(&env, "JFK"),
+        &Symbol::new(&env, "LAX"),
+        &(env.ledger().timestamp() + 500_000),
+        &price,
+        &contracts.token.address,
+        &contact,
+    );
+    assert!(booking_id > 0);
+
+    let stored_contact = contracts.booking.get_booking_contact(&booking_id);
+    assert_eq!(stored_contact, contact);
+}
+
+/// Full workflow: booking creation → payment → refund policy → cancellation → refund processing
+#[test]
 fn test_complete_booking_to_refund_workflow() {
     let env = new_env();
     let actors = generate_actors(&env);

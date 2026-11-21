@@ -39,6 +39,7 @@ pub struct Booking {
     pub amount_escrowed: i128,
     pub status: Symbol, // "pending", "confirmed", "completed", "cancelled", "refunded"
     pub created_at: u64,
+    pub contact_channel: String,
 }
 
 #[contracttype]
@@ -139,8 +140,10 @@ impl BookingContract {
         departure_time: u64,
         price: i128,
         token: Address,
+        contact_channel: String,
     ) -> u64 {
         passenger.require_auth();
+        assert!(contact_channel.len() > 0, "Invalid contact channel");
 
         let booking_id = BookingStorage::next_id(&env);
 
@@ -157,6 +160,7 @@ impl BookingContract {
             amount_escrowed: 0,
             status: symbol_short!("pending"),
             created_at: env.ledger().timestamp(),
+            contact_channel,
         };
 
         BookingStorage::set(&env, booking_id, &booking);

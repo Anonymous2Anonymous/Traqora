@@ -20,6 +20,7 @@ fn test_payment_escrow_flow() {
         &1704067200,
         &price,
         &contracts.token.address,
+        &soroban_sdk::String::from_str(&env, "passenger@example.com"),
     );
 
     let booking = contracts.booking.get_booking(&booking_id).unwrap();
@@ -73,6 +74,7 @@ fn test_refund_flow() {
         &departure_time,
         &price,
         &contracts.token.address,
+        &soroban_sdk::String::from_str(&env, "+15550192837"),
     );
 
     contracts
