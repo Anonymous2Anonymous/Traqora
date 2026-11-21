@@ -330,11 +330,106 @@ fn test_flight_booking_reconcile_reference_timeout_recovery() {
     let seat = Symbol::new(&env, "15A");
     let request_ref = Symbol::new(&env, "timeout_ref_999");
 
-    let id1 = client.reconcile_booking_reference(&passenger, &flight_id, &seat, &1_500, &request_ref);
+    let id1 =
+        client.reconcile_booking_reference(&passenger, &flight_id, &seat, &1_500, &request_ref);
     let booking1 = client.get_booking(&id1).unwrap();
     assert_eq!(booking1.seat, seat);
 
     // Retry with same request ref after timeout should return the exact same booking id without duplicate reservation error
-    let id2 = client.reconcile_booking_reference(&passenger, &flight_id, &seat, &1_500, &request_ref);
+    let id2 =
+        client.reconcile_booking_reference(&passenger, &flight_id, &seat, &1_500, &request_ref);
     assert_eq!(id1, id2);
+}
+
+// ─── Passenger Name Validation & International Unicode Preservation ─────────
+
+#[test]
+fn test_reserve_seat_valid_international_passenger_names() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let passenger1 = Address::generate(&env);
+    let passenger2 = Address::generate(&env);
+    let passenger3 = Address::generate(&env);
+    let contract_id = env.register(FlightBookingContract, ());
+    let client = FlightBookingContractClient::new(&env, &contract_id);
+
+    let flight_id = Symbol::new(&env, "FLINTL");
+
+    // Diacritics and accented characters (e.g., François, María)
+    let name1 = soroban_sdk::String::from_str(&env, "François Müller");
+    let id1 = client.reserve_seat(
+        &passenger1,
+        &flight_id,
+        &Symbol::new(&env, "1A"),
+        &1_000,
+        &name1,
+    );
+    assert_eq!(client.get_booking(&id1).unwrap().booking_id, id1);
+
+    // Non-Latin scripts or extended unicode
+    let name2 = soroban_sdk::String::from_str(&env, "山田 太郎");
+    let id2 = client.reserve_seat(
+        &passenger2,
+        &flight_id,
+        &Symbol::new(&env, "1B"),
+        &1_000,
+        &name2,
+    );
+    assert_eq!(client.get_booking(&id2).unwrap().booking_id, id2);
+
+    // Hyphens, apostrophes, and standard punctuation in names
+    let name3 = soroban_sdk::String::from_str(&env, "O'Connor-Smith, Anna-Maria");
+    let id3 = client.reserve_seat(
+        &passenger3,
+        &flight_id,
+        &Symbol::new(&env, "1C"),
+        &1_000,
+        &name3,
+    );
+    assert_eq!(client.get_booking(&id3).unwrap().booking_id, id3);
+}
+
+#[test]
+#[should_panic]
+fn test_reserve_seat_rejects_c0_control_characters() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let passenger = Address::generate(&env);
+    let contract_id = env.register(FlightBookingContract, ());
+    let client = FlightBookingContractClient::new(&env, &contract_id);
+
+    let flight_id = Symbol::new(&env, "FLCTRL");
+    // Name containing ASCII null / control character (0x00 or 0x07)
+    let malicious_name = soroban_sdk::String::from_str(&env, "John\u{0007}Doe");
+    client.reserve_seat(
+        &passenger,
+        &flight_id,
+        &Symbol::new(&env, "2A"),
+        &1_000,
+        &malicious_name,
+    );
+}
+
+#[test]
+#[should_panic]
+fn test_reserve_seat_rejects_del_control_character() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let passenger = Address::generate(&env);
+    let contract_id = env.register(FlightBookingContract, ());
+    let client = FlightBookingContractClient::new(&env, &contract_id);
+
+    let flight_id = Symbol::new(&env, "FLDEL");
+    // Name containing DEL control character (0x7F)
+    let malicious_name = soroban_sdk::String::from_str(&env, "Jane\u{007F}Smith");
+    client.reserve_seat(
+        &passenger,
+        &flight_id,
+        &Symbol::new(&env, "2B"),
+        &1_000,
+        &malicious_name,
+    );
 }

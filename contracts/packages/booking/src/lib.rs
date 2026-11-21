@@ -129,6 +129,48 @@ impl BookingContract {
 
     // Initialize booking - starts in "pending" status until paid
     #[allow(clippy::too_many_arguments)]
+    pub fn create_booking_with_contact(
+        env: Env,
+        passenger: Address,
+        airline: Address,
+        flight_number: Symbol,
+        from: Symbol,
+        to: Symbol,
+        departure_time: u64,
+        price: i128,
+        token: Address,
+        contact_channel: Symbol,
+    ) -> u64 {
+        passenger.require_auth();
+        if contact_channel == Symbol::new(&env, "") {
+            panic!("Invalid contact channel");
+        }
+        let mut booking_id: u64 = env
+            .storage()
+            .persistent()
+            .get(&Symbol::new(&env, "NextBookingId"))
+            .unwrap_or(1);
+        let booking = Booking {
+            id: booking_id,
+            passenger: passenger.clone(),
+            airline,
+            flight_number,
+            from,
+            to,
+            departure_time,
+            price,
+            amount_escrowed: 0,
+            token,
+            status: Symbol::new(&env, "pending"),
+        };
+        env.storage().persistent().set(&booking_id, &booking);
+        booking_id += 1;
+        env.storage()
+            .persistent()
+            .set(&Symbol::new(&env, "NextBookingId"), &booking_id);
+        booking_id
+    }
+
     pub fn create_booking(
         env: Env,
         passenger: Address,

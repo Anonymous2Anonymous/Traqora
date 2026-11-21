@@ -5,6 +5,52 @@ use token::{TRQTokenContract, TRQTokenContractClient};
 use integration_tests::{generate_actors, initialize_token, new_env, register_contracts};
 
 #[test]
+fn test_create_booking_with_contact_channel_success() {
+    let env = new_env();
+    let actors = generate_actors(&env);
+    let contracts = register_contracts(&env);
+    initialize_token(&env, &contracts.token, &actors.admin);
+
+    let price = 100_0000000i128;
+    let booking_id = contracts.booking.create_booking_with_contact(
+        &actors.passenger,
+        &actors.airline,
+        &Symbol::new(&env, "FL123"),
+        &Symbol::new(&env, "JFK"),
+        &Symbol::new(&env, "LAX"),
+        &1704067200,
+        &price,
+        &contracts.token.address,
+        &Symbol::new(&env, "email"),
+    );
+
+    let booking = contracts.booking.get_booking(&booking_id).unwrap();
+    assert_eq!(booking.status, Symbol::new(&env, "pending"));
+}
+
+#[test]
+#[should_panic(expected = "Invalid contact channel")]
+fn test_create_booking_with_empty_contact_panics() {
+    let env = new_env();
+    let actors = generate_actors(&env);
+    let contracts = register_contracts(&env);
+    initialize_token(&env, &contracts.token, &actors.admin);
+
+    let price = 100_0000000i128;
+    contracts.booking.create_booking_with_contact(
+        &actors.passenger,
+        &actors.airline,
+        &Symbol::new(&env, "FL123"),
+        &Symbol::new(&env, "JFK"),
+        &Symbol::new(&env, "LAX"),
+        &1704067200,
+        &price,
+        &contracts.token.address,
+        &Symbol::new(&env, ""),
+    );
+}
+
+#[test]
 fn test_pay_for_booking_then_success() {
     let env = new_env();
     let actors = generate_actors(&env);

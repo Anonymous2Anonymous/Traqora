@@ -47,4 +47,18 @@ describe('Mobile Wallet Authentication', () => {
 
     expect(result).toBe(false);
   });
+
+  it('verifies payment transaction finality successfully', async () => {
+    const mockVerify = jest.fn().mockResolvedValue(true);
+    (WalletAuthFactory.getAdapter as jest.Mock).mockReturnValue({ verify: mockVerify });
+
+    const result = await authenticateMobileWallet({
+      walletAddress: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',
+      signatureOrXdr: 'mock_signature',
+      walletType: 'albedo',
+      transactionHash: 'valid_tx_hash',
+    });
+
+    expect(result).toBe(true);
+  });
 });
